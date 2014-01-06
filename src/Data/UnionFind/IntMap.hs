@@ -7,7 +7,7 @@
 --
 module Data.UnionFind.IntMap 
     ( newPointSupply, fresh, repr, descriptor, union, equivalent,
-      PointSupply, Point ) where
+      classSize, addSize, PointSupply, Point ) where
 
 import qualified Data.IntMap as IM
 
@@ -23,6 +23,21 @@ data Link a
      deriving Show
 
 newtype Point a = Point Int
+
+-- | /O(1)/. Return the size of the argument point's
+-- equivalence class.
+classSize :: PointSupply a ->Point a -> Int
+classSize ps p = reprInfo ps p (\_n rank _a -> rank)
+
+-- | Add to the weight of a class.
+addSize :: Int -> PointSupply a -> Point a -> PointSupply a
+addSize n (PointSupply next eqs) (Point i0) = go i0
+  where 
+    go !i = case eqs IM.! i of
+              Link i' -> go i'
+              Info r a -> PointSupply next
+                          $! flip (IM.insert i) eqs
+                          $! Info (r+n) a
 
 newPointSupply :: PointSupply a
 newPointSupply = PointSupply 0 IM.empty

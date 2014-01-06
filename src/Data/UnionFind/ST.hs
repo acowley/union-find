@@ -28,7 +28,7 @@
 {-# OPTIONS_GHC -funbox-strict-fields #-}
 module Data.UnionFind.ST
   ( Point, fresh, repr, union, union', equivalent, redundant,
-    descriptor, setDescriptor, modifyDescriptor )
+    descriptor, classSize, addSize, setDescriptor, modifyDescriptor )
 where
 
 import Control.Applicative
@@ -52,6 +52,17 @@ data Info a = MkInfo
     -- ^ The size of the equivalence class, used by 'union'.
   , descr  :: a
   } deriving Eq
+
+-- | /O(1)/. Return the size of the argument point's
+-- equivalence class.
+classSize :: Point s a -> ST s Int
+classSize point = do
+  weight <$> (readSTRef =<< descrRef point)
+
+-- | Add to the weight of a class.
+addSize :: Int -> Point s a -> ST s ()
+addSize n point =
+  descrRef point >>= flip modifySTRef' (\i -> i {weight = weight i + n})
 
 -- | /O(1)/. Create a fresh point and return it.  A fresh point is in
 -- the equivalence class that contains only itself.
